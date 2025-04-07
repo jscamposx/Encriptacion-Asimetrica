@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-// Helper para generar frase aleatoria
+
 const generatePassphrase = (length: number): string => {
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
@@ -10,18 +10,18 @@ const generatePassphrase = (length: number): string => {
   return result;
 };
 
-// Helper para hashear un string (usaremos SHA-256)
+
 const hashString = async (input: string): Promise<string> => {
   const encoder = new TextEncoder();
   const data = encoder.encode(input);
   const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
-  // Convertir ArrayBuffer a string hexadecimal
+
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   return hashHex;
 };
 
-// Helper para convertir ArrayBuffer a Base64 (simplificado)
+
 const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
     let binary = '';
     const bytes = new Uint8Array(buffer);
@@ -36,7 +36,7 @@ const Encryptor = () => {
   const [originalText, setOriginalText] = useState<string | null>(null);
   const [publicKeyPEM, setPublicKeyPEM] = useState<string | null>(null);
   const [privateKeyPEM, setPrivateKeyPEM] = useState<string | null>(null);
-  const [generatedPassphrase, setGeneratedPassphrase] = useState<string | null>(null); // Para mostrar al usuario
+  const [generatedPassphrase, setGeneratedPassphrase] = useState<string | null>(null); 
   const [status, setStatus] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
@@ -53,7 +53,7 @@ const Encryptor = () => {
       ["encrypt", "decrypt"]
     );
 
-    // Exportar claves a formato PEM (simplificado, solo el contenido Base64)
+  
     const publicKeyBuffer = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
     const privateKeyBuffer = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
 
@@ -70,7 +70,7 @@ const Encryptor = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Resetear estados al cargar nuevo archivo
+  
     setOriginalText(null);
     setPublicKeyPEM(null);
     setPrivateKeyPEM(null);
@@ -83,7 +83,7 @@ const Encryptor = () => {
       setOriginalText(text);
       setStatus("Archivo leído. Iniciando encriptación...");
 
-      const rsaKeyPair = await generateRSAKeyPair(); // Genera claves RSA y actualiza estado
+      const rsaKeyPair = await generateRSAKeyPair(); 
 
       setStatus("Generando clave simétrica AES...");
       const aesKey = await window.crypto.subtle.generateKey(
@@ -92,7 +92,7 @@ const Encryptor = () => {
         ["encrypt", "decrypt"]
       );
 
-      const iv = window.crypto.getRandomValues(new Uint8Array(12)); // IV para AES-GCM
+      const iv = window.crypto.getRandomValues(new Uint8Array(12)); 
       const encodedText = new TextEncoder().encode(text);
 
       setStatus("Encriptando contenido con AES...");
@@ -102,29 +102,29 @@ const Encryptor = () => {
         encodedText
       );
 
-      // Exportar la clave AES para encriptarla con RSA
+ 
       const exportedAESKeyBuffer = await window.crypto.subtle.exportKey("raw", aesKey);
 
       setStatus("Encriptando clave AES con RSA...");
       const encryptedAESKeyBuffer = await window.crypto.subtle.encrypt(
-        { name: "RSA-OAEP" }, // Asegurarse que coincide con la generación/importación
+        { name: "RSA-OAEP" }, 
         rsaKeyPair.publicKey,
         exportedAESKeyBuffer
       );
 
-      // Generar y hashear la frase de contraseña
+    
       setStatus("Generando frase de contraseña...");
       const newPassphrase = generatePassphrase(8);
       const passphraseHash = await hashString(newPassphrase);
-      setGeneratedPassphrase(newPassphrase); // Guardar para mostrar al usuario
+      setGeneratedPassphrase(newPassphrase); 
 
       setStatus("Preparando archivo JSON...");
       const jsonOutput = JSON.stringify({
         encryptedContent: arrayBufferToBase64(encryptedContentBuffer),
         encryptedAESKey: arrayBufferToBase64(encryptedAESKeyBuffer),
         iv: arrayBufferToBase64(iv.buffer),
-        passphraseHash: passphraseHash, // Incluir el HASH de la frase
-      }, null, 2); // null, 2 para pretty-print JSON
+        passphraseHash: passphraseHash, 
+      }, null, 2); 
 
       download(jsonOutput, `${file.name}.encrypted.json`, "application/json");
       setStatus("¡Archivo encriptado y descargado! Guarda la frase de contraseña.");
@@ -132,9 +132,9 @@ const Encryptor = () => {
     } catch (error) {
         console.error("Error durante la encriptación:", error);
         setStatus(`Error: ${error instanceof Error ? error.message : String(error)}`);
-        setGeneratedPassphrase(null); // Limpiar frase si hubo error
+        setGeneratedPassphrase(null); 
     } finally {
-        setIsProcessing(false); // Finaliza el procesamiento
+        setIsProcessing(false); 
     }
   };
 
@@ -144,19 +144,16 @@ const Encryptor = () => {
     const a = document.createElement("a");
     a.href = url;
     a.download = filename;
-    document.body.appendChild(a); // Necesario en algunos navegadores
+    document.body.appendChild(a); 
     a.click();
-    document.body.removeChild(a); // Limpiar
+    document.body.removeChild(a); 
     URL.revokeObjectURL(url);
   };
 
-  // Función separada para descargar claves PEM
+
   const downloadKey = (keyData: string | null, filename: string) => {
       if (!keyData) return;
-      // Opcionalmente, agregar cabeceras PEM estándar si es necesario para otras herramientas
-      // const pemFormatted = `-----BEGIN PUBLIC KEY-----\n${keyData}\n-----END PUBLIC KEY-----`;
-      // const pemFormattedPrivate = `-----BEGIN PRIVATE KEY-----\n${keyData}\n-----END PRIVATE KEY-----`;
-      // Por ahora, solo descargamos el contenido Base64 como .pem
+     
       download(keyData, filename, "application/x-pem-file");
   }
 

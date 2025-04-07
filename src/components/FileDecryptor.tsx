@@ -1,17 +1,11 @@
 import React, { useState, useCallback, useEffect } from "react";
 
-// --- Constants (Ensure these match the Encryptor component) ---
+
 const PASSPHRASE_LENGTH = 8;
 const RSA_ALGORITHM = "RSA-OAEP";
 const RSA_HASH = "SHA-256";
 const AES_ALGORITHM = "AES-GCM";
-// No need for AES_KEY_LENGTH or AES_IV_LENGTH here, they are derived from the file
 
-// --- Helper Functions ---
-
-/**
- * Reads a File object and returns its content as text.
- */
 const loadFileAsText = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -21,9 +15,7 @@ const loadFileAsText = (file: File): Promise<string> => {
   });
 };
 
-/**
- * Converts a Base64 string to an ArrayBuffer.
- */
+
 const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
     const binary_string = window.atob(base64);
     const len = binary_string.length;
@@ -34,10 +26,7 @@ const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
     return bytes.buffer;
 }
 
-/**
- * Hashes a string using SHA-256. MUST be identical to the Encryptor's version.
- * @returns Hexadecimal representation of the hash.
- */
+
 const hashString = async (input: string): Promise<string> => {
   if (!window.crypto?.subtle) {
       throw new Error("Web Crypto API no está disponible en este navegador.");
@@ -50,23 +39,21 @@ const hashString = async (input: string): Promise<string> => {
   return hashHex;
 };
 
-/**
- * Creates and triggers a file download.
- */
+
 const triggerDownload = (data: string, filename: string, type: string = "text/plain;charset=utf-8") => {
     const blob = new Blob([data], { type });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = filename;
-    document.body.appendChild(a); // Required for Firefox
+    document.body.appendChild(a); 
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url); // Clean up memory
+    URL.revokeObjectURL(url); 
 };
 
 
-// --- React Component ---
+
 
 const Decryptor: React.FC = () => {
   const [decryptedText, setDecryptedText] = useState<string | null>(null);
@@ -75,49 +62,44 @@ const Decryptor: React.FC = () => {
 
   const [jsonFile, setJsonFile] = useState<File | null>(null);
   const [privateKeyFile, setPrivateKeyFile] = useState<File | null>(null);
-  const [privateKeyPEM, setPrivateKeyPEM] = useState<string | null>(null); // Base64 content only
+  const [privateKeyPEM, setPrivateKeyPEM] = useState<string | null>(null); 
   const [inputPassphrase, setInputPassphrase] = useState<string>("");
 
-  // Check for Web Crypto API availability on component mount
+
   useEffect(() => {
       if (!window.crypto?.subtle) {
           setStatus("❌ Error: La API Web Crypto no es compatible con este navegador. No se puede desencriptar.");
       }
   }, []);
 
-  /**
-   * Imports a private key from PEM (Base64 content) string.
-   */
+
   const importPrivateKey = useCallback(async (pemBase64: string): Promise<CryptoKey> => {
     if (!window.crypto?.subtle) {
         throw new Error("Web Crypto API no está disponible.");
     }
-    // Step 1: Decode Base64 to ArrayBuffer
+ 
     const binaryDer = base64ToArrayBuffer(pemBase64);
 
-    // Step 2: Import the key
+
     return await window.crypto.subtle.importKey(
-      "pkcs8",          // Standard format for private keys
+      "pkcs8",       
       binaryDer,
       {
-        name: RSA_ALGORITHM, // Must match the algorithm used for encryption
-        hash: RSA_HASH,      // Must match the hash used during key generation/encryption
+        name: RSA_ALGORITHM, 
+        hash: RSA_HASH,    
       },
-      true,             // Key is extractable (though not strictly needed for decrypt)
-      ["decrypt"]       // Specify the key usage
+      true,             
+      ["decrypt"]      
     );
-  }, []); // Depends only on constants
+  }, []); 
 
-  /**
-   * Performs the core decryption logic.
-   */
   const performDecryption = useCallback(async (
       encryptedFile: File,
       privateKeyPemContent: string,
       passphrase: string
   ) => {
     setIsProcessing(true);
-    setDecryptedText(null); // Clear previous result
+    setDecryptedText(null); 
     setStatus("⏳ Iniciando proceso de desencriptación...");
 
     if (!window.crypto?.subtle) {
@@ -127,7 +109,7 @@ const Decryptor: React.FC = () => {
     }
 
     try {
-        // --- Step 1: Read and Parse Encrypted JSON File ---
+      
         setStatus("⏳ 1. Leyendo archivo encriptado (.json)...");
         let parsedData;
         try {
@@ -139,12 +121,12 @@ const Decryptor: React.FC = () => {
 
         const { encryptedContent, encryptedAESKey, iv, passphraseHash } = parsedData;
 
-        // Validate required fields
+    
         if (!encryptedContent || !encryptedAESKey || !iv || !passphraseHash) {
             throw new Error("El archivo JSON no contiene todos los campos necesarios (encryptedContent, encryptedAESKey, iv, passphraseHash).");
         }
 
-        // --- Step 2: Verify Passphrase ---
+   
         setStatus("⏳ 2. Verificando frase de contraseña...");
         const inputHash = await hashString(passphrase);
 
@@ -153,56 +135,56 @@ const Decryptor: React.FC = () => {
         }
         setStatus("✅ 2. Frase de contraseña correcta.");
 
-        // --- Step 3: Import Private Key ---
+ 
         setStatus("⏳ 3. Importando llave privada...");
         const privateKey = await importPrivateKey(privateKeyPemContent);
         setStatus("✅ 3. Llave privada importada.");
 
-        // --- Step 4: Decrypt AES Key using RSA Private Key ---
+    
         setStatus("⏳ 4. Desencriptando clave simétrica AES...");
         let aesRawKeyBuffer: ArrayBuffer;
         try {
              aesRawKeyBuffer = await window.crypto.subtle.decrypt(
-                { name: RSA_ALGORITHM }, // Algorithm used to encrypt the AES key
+                { name: RSA_ALGORITHM },
                 privateKey,
-                base64ToArrayBuffer(encryptedAESKey) // The encrypted AES key
+                base64ToArrayBuffer(encryptedAESKey) 
             );
         } catch (keyDecryptError) {
             throw new Error(`Error al desencriptar la clave AES. ¿Es la llave privada correcta? Detalles: ${keyDecryptError instanceof Error ? keyDecryptError.message : String(keyDecryptError)}`);
         }
         setStatus("✅ 4. Clave AES desencriptada.");
 
-        // --- Step 5: Import the Decrypted AES Key ---
+
         setStatus("⏳ 5. Importando clave AES desencriptada...");
         const aesKey = await window.crypto.subtle.importKey(
-            "raw",            // Format of the decrypted key buffer
+            "raw",           
             aesRawKeyBuffer,
-            { name: AES_ALGORITHM }, // Algorithm this key will be used for
-            true,             // Key is extractable (not strictly needed)
-            ["decrypt"]       // Specify the key usage
+            { name: AES_ALGORITHM },
+            true,            
+            ["decrypt"]      
         );
         setStatus("✅ 5. Clave AES importada.");
 
-        // --- Step 6: Decrypt File Content using AES Key and IV ---
+
         setStatus("⏳ 6. Desencriptando contenido del archivo...");
         let decryptedBuffer: ArrayBuffer;
         try {
             decryptedBuffer = await window.crypto.subtle.decrypt(
                 {
                     name: AES_ALGORITHM,
-                    iv: base64ToArrayBuffer(iv) // The IV used during AES encryption
+                    iv: base64ToArrayBuffer(iv) 
                 },
                 aesKey,
-                base64ToArrayBuffer(encryptedContent) // The encrypted file content
+                base64ToArrayBuffer(encryptedContent) 
             );
         } catch (contentDecryptError) {
              throw new Error(`Error al desencriptar el contenido. ¿Son correctos los datos del archivo JSON (IV, contenido)? Detalles: ${contentDecryptError instanceof Error ? contentDecryptError.message : String(contentDecryptError)}`);
         }
         setStatus("✅ 6. Contenido desencriptado.");
 
-        // --- Step 7: Decode Decrypted Content to Text ---
+ 
         setStatus("⏳ 7. Decodificando texto...");
-        const decodedText = new TextDecoder().decode(decryptedBuffer); // Assumes UTF-8
+        const decodedText = new TextDecoder().decode(decryptedBuffer);
         setDecryptedText(decodedText);
         setStatus("🎉 ¡Archivo desencriptado con éxito!");
 
@@ -210,18 +192,16 @@ const Decryptor: React.FC = () => {
         console.error("Error detallado durante la desencriptación:", err);
         const errorMessage = err instanceof Error ? err.message : String(err);
         setStatus(`❌ Error: ${errorMessage}`);
-        setDecryptedText(null); // Clear result on error
+        setDecryptedText(null); 
     } finally {
-        setIsProcessing(false); // Re-enable inputs/button
+        setIsProcessing(false); 
     }
-  }, [importPrivateKey]); // Depends on importPrivateKey function
+  }, [importPrivateKey]); 
 
 
-  /**
-   * Handles the click event for the main decrypt button. Performs validation.
-   */
+
   const handleDecryptClick = useCallback(() => {
-      // Clear previous results and status on new attempt
+   
       setDecryptedText(null);
       setStatus(null);
 
@@ -241,14 +221,12 @@ const Decryptor: React.FC = () => {
           return;
       }
 
-      // Type assertion is safe here due to the checks above
+
       performDecryption(jsonFile!, privateKeyPEM!, inputPassphrase);
 
   }, [jsonFile, privateKeyPEM, inputPassphrase, performDecryption]);
 
-  /**
-   * Handles the private key file upload, reads it, and extracts Base64 content.
-   */
+
   const handlePrivateKeyUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
@@ -258,19 +236,18 @@ const Decryptor: React.FC = () => {
     }
 
     setPrivateKeyFile(file);
-    setPrivateKeyPEM(null); // Clear previous key content
+    setPrivateKeyPEM(null); 
     setStatus("⏳ Leyendo llave privada...");
-    setDecryptedText(null); // Clear previous result
-
+    setDecryptedText(null); 
     try {
         const pemContent = await loadFileAsText(file);
-        // Robustly extract Base64 content, removing standard PEM headers/footers and whitespace
+  
         const base64Content = pemContent
             .replace(/-----BEGIN PRIVATE KEY-----/g, '')
             .replace(/-----END PRIVATE KEY-----/g, '')
-            .replace(/-----BEGIN ENCRYPTED PRIVATE KEY-----/g, '') // Handle encrypted keys if needed later
+            .replace(/-----BEGIN ENCRYPTED PRIVATE KEY-----/g, '') 
             .replace(/-----END ENCRYPTED PRIVATE KEY-----/g, '')
-            .replace(/\s+/g, ''); // Remove all whitespace (newlines, spaces)
+            .replace(/\s+/g, ''); 
 
         if (!base64Content) {
              throw new Error("No se pudo extraer contenido Base64 del archivo PEM.");
@@ -282,14 +259,12 @@ const Decryptor: React.FC = () => {
         console.error("Error leyendo o procesando llave privada:", error);
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
         setStatus(`❌ Error al leer la llave privada: ${errorMessage}`);
-        setPrivateKeyFile(null); // Reset file state on error
+        setPrivateKeyFile(null); 
         setPrivateKeyPEM(null);
     }
   }, []);
 
-   /**
-    * Handles downloading the decrypted text with confirmation.
-    */
+
    const handleDownloadDecrypted = useCallback(() => {
      if (!decryptedText) return;
 
@@ -302,17 +277,17 @@ const Decryptor: React.FC = () => {
      }
    }, [decryptedText, jsonFile]);
 
-   // --- Render ---
+
   return (
-    // Responsive padding and max-width
+
     <div className="p-4 md:p-6 lg:p-8 rounded-xl bg-white shadow-lg flex flex-col gap-5 max-w-3xl mx-auto my-8 border border-gray-200">
       <h2 className="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-4">
          Desencriptador Híbrido
       </h2>
 
-      {/* Input Section Wrapper */}
+ 
       <div className="space-y-5">
-        {/* 1. JSON File Input */}
+ 
         <div className="flex flex-col gap-2 border border-gray-200 p-4 rounded-lg bg-gray-50/50 shadow-sm">
           <label htmlFor="json-upload" className="text-sm font-medium text-gray-700 flex items-center gap-2">
              Carga el archivo encriptado (.json):
@@ -325,7 +300,7 @@ const Decryptor: React.FC = () => {
               const file = e.target.files?.[0] ?? null;
               setJsonFile(file);
               setStatus(file ? "Archivo JSON seleccionado." : "Selecciona un archivo JSON.");
-              setDecryptedText(null); // Clear result on new file selection
+              setDecryptedText(null); 
             }}
             disabled={isProcessing}
             className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-wait cursor-pointer"
@@ -333,7 +308,7 @@ const Decryptor: React.FC = () => {
           {jsonFile && <span className="text-xs text-gray-500 mt-1">Archivo: {jsonFile.name}</span>}
         </div>
 
-        {/* 2. Private Key Input */}
+     
         <div className="flex flex-col gap-2 border border-gray-200 p-4 rounded-lg bg-gray-50/50 shadow-sm">
           <label htmlFor="pem-upload" className="text-sm font-medium text-gray-700 flex items-center gap-2">
             Carga tu llave privada (.pem):
@@ -349,28 +324,28 @@ const Decryptor: React.FC = () => {
            {privateKeyFile && <span className="text-xs text-gray-500 mt-1">Archivo: {privateKeyFile.name} {privateKeyPEM ? '(Leída)' : '(Error al leer)'}</span>}
         </div>
 
-        {/* 3. Passphrase Input */}
+    
         <div className="flex flex-col gap-2 border border-gray-200 p-4 rounded-lg bg-gray-50/50 shadow-sm">
           <label htmlFor="passphrase-input" className="text-sm font-medium text-gray-700 flex items-center gap-2">
             Introduce la frase de contraseña ({PASSPHRASE_LENGTH} caracteres):
           </label>
           <input
             id="passphrase-input"
-            type="password" // Keep as password for security
+            type="password" 
             value={inputPassphrase}
             onChange={(e) => setInputPassphrase(e.target.value)}
             maxLength={PASSPHRASE_LENGTH}
             disabled={isProcessing}
             placeholder={`Introduce los ${PASSPHRASE_LENGTH} caracteres exactos`}
             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm font-mono disabled:opacity-50 disabled:bg-gray-100"
-             autoComplete="off" // Prevent browser autofill
+             autoComplete="off"
           />
            <p className="text-xs text-gray-500">Distinción entre mayúsculas/minúsculas y números.</p>
         </div>
       </div>
 
 
-      {/* Decrypt Button */}
+ 
       <button
         onClick={handleDecryptClick}
         disabled={!jsonFile || !privateKeyPEM || inputPassphrase.length !== PASSPHRASE_LENGTH || isProcessing}
@@ -382,20 +357,20 @@ const Decryptor: React.FC = () => {
         }
       </button>
 
-      {/* Status Display */}
+ 
       {status && (
           <p className={`text-sm p-3 rounded text-center font-medium mt-2 ${
               status.startsWith('❌ Error') ? 'bg-red-100 text-red-800 border border-red-200' :
               status.startsWith('🎉') || status.startsWith('✅') ? 'bg-green-100 text-green-800 border border-green-200' :
               status.startsWith('⏳') ? 'bg-blue-100 text-blue-800 border border-blue-200 animate-pulse' :
-              'bg-gray-100 text-gray-800 border border-gray-200' // Default/Info
+              'bg-gray-100 text-gray-800 border border-gray-200' 
             }`}>
-              {/* Emojis are already included in the status string */}
+        
               {status}
           </p>
       )}
 
-      {/* Decrypted Text Display and Download */}
+
       {decryptedText && (
         <div className="bg-green-50 p-4 rounded-lg border border-green-200 mt-4 shadow-sm">
           <strong className="text-base text-green-900 block mb-2">Contenido desencriptado:</strong>
