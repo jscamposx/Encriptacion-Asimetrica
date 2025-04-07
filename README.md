@@ -6,6 +6,9 @@ Esta es una aplicación web construida con **Astro** y **React** que permite a l
 
 Además, implementa una capa extra de seguridad requiriendo una **frase de contraseña** de 8 caracteres (cuya verificación se realiza mediante un hash **SHA-256**) para el proceso de desencriptación. Todas las operaciones criptográficas se realizan del lado del cliente utilizando la **Web Crypto API** del navegador, lo que significa que los archivos y las claves privadas nunca abandonan la máquina del usuario, garantizando la privacidad.
 
+
+https://voluble-belekoy-7ea83f.netlify.app/
+
 ## Características Principales 🚀
 
 * **Encriptación Segura:** Encripta archivos `.txt` seleccionados por el usuario.
