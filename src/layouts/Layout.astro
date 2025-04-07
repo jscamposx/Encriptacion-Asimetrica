@@ -5,9 +5,9 @@ interface Props {
 	
 }
 import "../styles/global.css";
-
+import Navbar from '../components/NavBar.tsx';
 const { title } = Astro.props;
-
+import { ClientRouter } from "astro:transitions";
 ---
 
 
@@ -21,8 +21,10 @@ const { title } = Astro.props;
 	
 	
 		<title>{title}</title>
+		<ClientRouter />
 	</head>
 	<body class="">
+		<Navbar />
 		<slot />
 	</body>
 </html>
