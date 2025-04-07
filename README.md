@@ -1,124 +1,120 @@
+Okay, aquí tienes el contenido anterior formateado como un bloque de código Markdown listo para copiar y pegar en un archivo .md.
+
+Markdown
+
 # 🔐 Encriptador/Desencriptador Asimétrico Web 🔓
 
-## Descripción General ✨
+**Proyecto:** [https://voluble-belekoy-7ea83f.netlify.app/](https://voluble-belekoy-7ea83f.netlify.app/)
 
-Esta es una aplicación web construida con **Astro** y **React** que permite a los usuarios encriptar y desencriptar archivos de texto directamente en su navegador. Utiliza un enfoque de **encriptación híbrida**, combinando la seguridad de la criptografía asimétrica (**RSA-OAEP**) para el intercambio de claves con la eficiencia de la criptografía simétrica (**AES-GCM**) para el contenido del archivo.
+Este proyecto implementa un sistema de **encriptación de archivos directamente en el navegador**, utilizando un enfoque de **cifrado híbrido**. El objetivo es combinar la eficiencia del cifrado simétrico con la seguridad en el intercambio de claves del cifrado asimétrico, todo ello usando tecnologías web estándar y seguras.
 
-Además, implementa una capa extra de seguridad requiriendo una **frase de contraseña** de 8 caracteres (cuya verificación se realiza mediante un hash **SHA-256**) para el proceso de desencriptación. Todas las operaciones criptográficas se realizan del lado del cliente utilizando la **Web Crypto API** del navegador, lo que significa que los archivos y las claves privadas nunca abandonan la máquina del usuario, garantizando la privacidad.
+---
 
+## 💡 Concepto Clave: Cifrado Híbrido
 
-https://voluble-belekoy-7ea83f.netlify.app/
+El cifrado híbrido es una estrategia que aprovecha lo mejor de dos mundos:
 
-## Características Principales 🚀
+1.  **Cifrado Simétrico (AES):** Es muy rápido y eficiente para encriptar grandes cantidades de datos (como el contenido de un archivo). Sin embargo, requiere que tanto el emisor como el receptor compartan la *misma clave secreta*, lo cual presenta un desafío para distribuirla de forma segura.
+2.  **Cifrado Asimétrico (RSA):** Utiliza un par de claves (pública y privada). La clave pública puede compartirse libremente y se usa para cifrar, mientras que solo la clave privada correspondiente puede descifrar. Es muy seguro para el intercambio de claves, pero es significativamente más lento y no es práctico para encriptar archivos grandes directamente.
 
-* **Encriptación Segura:** Encripta archivos `.txt` seleccionados por el usuario.
-* **Desencriptación Fiable:** Desencripta los archivos `.json` generados por esta misma aplicación.
-* **Generación de Claves RSA:** Crea un par de claves RSA (Pública y Privada) robusto de 2048 bits (estándar RSA-OAEP).
-* **Descarga de Claves:** Permite descargar fácilmente las claves pública y privada en formato `.pem` (codificadas en Base64).
-* **Encriptación Híbrida Eficiente:**
-    * Genera una clave simétrica **AES-GCM** de 256 bits para cifrar el contenido del archivo rápidamente.
-    * Encripta la clave AES de forma segura utilizando la **clave pública RSA** del destinatario (o la generada).
-* **Protección por Frase de Contraseña:**
-    * Genera automáticamente una frase aleatoria de 8 caracteres durante la encriptación como capa adicional.
-    * Almacena un hash **SHA-256** de la frase en el archivo JSON encriptado (no la frase en sí).
-    * Requiere que el usuario introduzca la frase correcta durante la desencriptación para verificarla contra el hash almacenado.
-* **Formato de Salida Organizado:** Empaqueta todos los componentes necesarios en un único archivo `.json` descargable:
-    * `encryptedContent`: Contenido del archivo original encriptado (Base64).
-    * `encryptedAESKey`: Clave AES encriptada con RSA (Base64).
-    * `iv`: Vector de inicialización para AES-GCM (Base64).
-    * `passphraseHash`: Hash SHA-256 de la frase de contraseña.
-* **Seguridad Centrada en el Cliente:** Todas las operaciones criptográficas se ejecutan exclusivamente en el navegador del usuario. ¡Tus archivos y claves privadas nunca se envían a ningún servidor!
-* **Interfaz Intuitiva:** Componentes **React** integrados en páginas **Astro** para una experiencia de usuario fluida e interactiva.
+**¿Cómo funciona en este proyecto?**
+* Se genera una clave **AES** única para encriptar el contenido del archivo (rápido).
+* Se utiliza la clave **pública RSA** del destinatario para encriptar *únicamente* la clave AES que se acaba de generar (seguro).
+* El archivo cifrado (con AES) y la clave AES cifrada (con RSA) se envían juntos.
+* El destinatario usa su **clave privada RSA** para descifrar la clave AES, y luego usa esa clave AES para descifrar el archivo completo.
 
-## Tecnologías 🛠️
+---
 
-* **🚀 Framework:** [Astro](https://astro.build/) (Para la estructura y optimización del sitio)
-* **⚛️ UI:** [React](https://reactjs.org/) (Integrado con Astro para componentes interactivos)
-* **🟦 Lenguaje:** [TypeScript](https://www.typescriptlang.org/), JavaScript (Para tipado seguro y lógica)
-* **💨 Estilos:** [Tailwind CSS](https://tailwindcss.com/) (Para un diseño rápido y moderno)
-* **🔑 Criptografía:** [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) (API nativa del navegador para operaciones criptográficas seguras)
+## 🛠️ Tecnologías Utilizadas
 
-## Estructura del Proyecto 📂
+Este proyecto se basa exclusivamente en **APIs nativas del navegador**, evitando dependencias externas para maximizar la seguridad y minimizar el tamaño del proyecto.
 
-encriptacion/
-├── 📁 .vscode/              # Configuraciones de VS Code
-├── 📁 node_modules/         # Dependencias del proyecto (instaladas por npm/yarn)
-├── 📁 public/               # Archivos estáticos
-│   └── 📁 assets/           # Imágenes, fuentes, etc.
-├── 📁 src/                  # Código fuente principal
-│   ├── 📁 components/       # Componentes React reutilizables
-│   │   ├── ⚛️ FileDecryptor.tsx  # Lógica y UI para desencriptar
-│   │   └── ⚛️ FileEncryptor.tsx  # Lógica y UI para encriptar
-│   ├── 📁 layouts/          # Plantillas de página de Astro
-│   │   └── 🚀 Layout.astro      # Layout principal de las páginas
-│   ├── 📁 pages/            # Rutas/Páginas de la aplicación
-│   │   ├── 🚀 Desincriptar.astro # Página para usar el componente Decryptor
-│   │   ├── 🚀 Encriptacion.astro # Página para usar el componente Encryptor
-│   │   └── 🚀 index.astro        # Página de inicio
-│   └── 📁 styles/           # Estilos globales
-│       └── 🎨 global.css
-├── 📄 .gitignore            # Archivos y carpetas ignorados por Git
-├── ⚙️ astro.config.mjs     # Archivo de configuración de Astro
-├── 📄 package-lock.json     # Lockfile de dependencias NPM
-├── 📄 package.json          # Metadatos y dependencias del proyecto
-├── 📄 README.md             # Este archivo
-└── 🔧 tsconfig.json        # Archivo de configuración de TypeScript
+### 🌐 Web Crypto API (`window.crypto.subtle`)
 
+Es la piedra angular de este proyecto. La [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) es una interfaz de bajo nivel integrada en los navegadores modernos que proporciona operaciones criptográficas fundamentales de forma segura.
 
-## Lógica de Funcionamiento ⚙️
+* **Funcionalidades Usadas:** Generación de claves (AES y RSA), cifrado, descifrado y exportación/importación de claves.
+* **Ventajas:** Segura, estándar, mantenida por los fabricantes de navegadores, no requiere librerías adicionales.
 
-### Proceso de Encriptación
+---
 
-1.  **📤 Selección de Archivo:** El usuario selecciona un archivo de texto (`.txt`).
-2.  **🔑 Generación de Claves RSA:** Se genera un nuevo par de claves pública/privada RSA-OAEP (2048 bits).
-3.  **🗝️ Generación de Clave AES:** Se genera una clave simétrica AES-GCM (256 bits).
-4.  **💬 Generación de Frase:** Se crea una frase de contraseña aleatoria de 8 caracteres.
-5.  **#️⃣ Hashing de Frase:** Se calcula el hash SHA-256 de la frase generada.
-6.  **🔒 Encriptación de Contenido:** El contenido del archivo `.txt` se encripta usando la clave AES-GCM y un vector de inicialización (IV) único y aleatorio.
-7.  **🔐 Encriptación de Clave AES:** La clave AES generada se encripta utilizando la clave pública RSA recién creada.
-8.  **📦 Empaquetado JSON:** Se crea un archivo `.json` que contiene:
-    * `encryptedContent`: El contenido encriptado (codificado en Base64).
-    * `encryptedAESKey`: La clave AES encriptada con RSA (codificada en Base64).
-    * `iv`: El vector de inicialización usado con AES (codificado en Base64).
-    * `passphraseHash`: El hash SHA-256 de la frase de contraseña.
-9.  **💾 Descargas:** Se ofrecen al usuario tres descargas separadas:
-    * El archivo `.json` con los datos encriptados.
-    * La clave pública (`public_key.pem`).
-    * La clave privada (`private_key.pem`).
-10. **👀 Mostrar Frase:** Se muestra al usuario la frase de contraseña de 8 caracteres generada, **indicándole claramente que debe guardarla de forma segura junto con la clave privada**, ya que será necesaria para desencriptar.
+## 🧊 AES (Advanced Encryption Standard) - Cifrado Simétrico
 
-### Proceso de Desencriptación
+### 🔸 ¿Qué es AES?
+AES es el estándar de facto para el cifrado simétrico. Utiliza la **misma clave** tanto para cifrar como para descifrar datos. Es conocido por su velocidad y robustez.
 
-1.  **📥 Carga de Archivos:** El usuario carga el archivo `.json` previamente encriptado y su archivo de clave privada (`.pem`) correspondiente.
-2.  **⌨️ Entrada de Frase:** El usuario introduce la frase de contraseña de 8 caracteres que guardó durante la encriptación.
-3.  **📄 Lectura de JSON:** Se leen y extraen los datos (`encryptedContent`, `encryptedAESKey`, `iv`, `passphraseHash`) del archivo `.json`.
-4.  **✅ Verificación de Frase:**
-    * Se calcula el hash SHA-256 de la frase introducida por el usuario.
-    * Se compara este hash calculado con el `passphraseHash` extraído del archivo JSON. **Si no coinciden, el proceso se detiene mostrando un error.**
-5.  **🔑 Importación de Clave Privada:** Se importa la clave privada RSA desde el archivo `.pem` proporcionado.
-6.  **🔓 Desencriptación de Clave AES:** Se utiliza la clave privada RSA importada para desencriptar la `encryptedAESKey` del JSON, recuperando así la clave AES original.
-7.  **🗝️ Importación de Clave AES:** Se importa la clave AES desencriptada para prepararla para su uso.
-8.  **📜 Desencriptación de Contenido:** Se utiliza la clave AES recuperada y el `iv` (vector de inicialización) del JSON para desencriptar el `encryptedContent`.
-9.  **💡 Mostrar/Descargar Resultado:** El contenido original del archivo se muestra en formato de texto plano al usuario, y se ofrece la opción de descargarlo como un nuevo archivo `.txt`.
-
-## Instalación y Uso 💻
-
-1.  **Clonar el Repositorio:**
-    ```bash
-    git clone <URL-DEL-REPOSITORIO> # Reemplaza con la URL real del repo
-    cd encriptacion
+### 🔸 Implementación en el Proyecto:
+* **Generación de Clave AES:** Se genera una clave AES de 256 bits utilizando el modo **AES-GCM** (Galois/Counter Mode).
+    ```typescript
+    const aesKey = await crypto.subtle.generateKey(
+      { name: "AES-GCM", length: 256 }, // Algoritmo y longitud de clave
+      true,                             // Clave exportable (para cifrarla con RSA)
+      ["encrypt", "decrypt"]            // Usos permitidos para la clave
+    );
     ```
-2.  **Instalar Dependencias:** Asegúrate de tener [Node.js](https://nodejs.org/) instalado (que incluye npm).
-    ```bash
-    npm install
-    # o si prefieres usar yarn:
-    # yarn install
+* **Modo AES-GCM:** Este modo es preferible porque no solo cifra los datos, sino que también incluye **autenticación (AEAD - Authenticated Encryption with Associated Data)**. Esto garantiza la confidencialidad y la integridad: si los datos cifrados son manipulados, el descifrado fallará, alertando al usuario.
+* **Vector de Inicialización (IV):** Se genera un IV aleatorio de 12 bytes (tamaño recomendado para AES-GCM) para cada operación de cifrado. El IV asegura que cifrar el mismo archivo dos veces produzca resultados diferentes, añadiendo una capa extra de seguridad. El IV no necesita ser secreto y se envía junto con los datos cifrados.
+
+---
+
+## 🔐 RSA (Rivest–Shamir–Adleman) - Cifrado Asimétrico
+
+### 🔸 ¿Qué es RSA?
+RSA es el algoritmo más conocido de cifrado asimétrico. Funciona con un **par de claves** matemáticamente relacionadas:
+* **Clave Pública:** Se usa para *cifrar* datos o verificar firmas. Puede compartirse sin riesgo.
+* **Clave Privada:** Se usa para *descifrar* datos o crear firmas. Debe mantenerse en secreto absoluto.
+
+### 🔸 Implementación en el Proyecto:
+* **Rol de RSA:** Su función principal aquí **no es cifrar el archivo**, sino **cifrar la clave AES simétrica** utilizada para el archivo. Esto resuelve el problema de cómo compartir la clave AES de forma segura.
+* **Generación del Par de Claves RSA:** Se genera un par de claves RSA (pública y privada) con los siguientes parámetros:
+    ```typescript
+    const keyPair = await crypto.subtle.generateKey(
+      {
+        name: "RSA-OAEP",            // Algoritmo RSA con padding OAEP (más seguro)
+        modulusLength: 2048,         // Longitud del módulo (tamaño de la clave), 2048 es un buen balance seguridad/rendimiento
+        publicExponent: new Uint8Array([1, 0, 1]), // Exponente público estándar (65537)
+        hash: "SHA-256",             // Algoritmo de hash a usar con OAEP
+      },
+      true,                         // Claves exportables (para guardarlas o compartirlas)
+      ["encrypt", "decrypt"]        // Usos permitidos (cifrar con pública, descifrar con privada)
+    );
     ```
-3.  **Ejecutar Servidor de Desarrollo:**
-    ```bash
-    npm run dev
-    # o
-    # yarn dev
+* **RSA-OAEP:** Se utiliza RSA con el padding OAEP (Optimal Asymmetric Encryption Padding). OAEP añade aleatoriedad al proceso de cifrado, haciendo a RSA resistente a ciertos tipos de ataques criptográficos.
+
+---
+
+## 🔄 Manejo de Datos: ArrayBuffer y Base64
+
+### 🔸 ¿Qué es `ArrayBuffer`?
+La Web Crypto API opera con datos binarios. Muchas de sus funciones devuelven los resultados (claves, datos cifrados) en formato `ArrayBuffer`. Un `ArrayBuffer` es un objeto que representa un bloque genérico de datos binarios de longitud fija. No se puede manipular directamente, sino a través de "vistas" como `Uint8Array`.
+
+### 🔸 ¿Por qué convertir a Base64?
+Los `ArrayBuffer` son datos binarios puros. Para poder almacenarlos fácilmente (por ejemplo, en un archivo JSON), enviarlos a través de redes (que a menudo prefieren texto) o simplemente mostrarlos/copiarlos como texto, necesitamos una representación textual. **Base64** es un esquema de codificación que convierte datos binarios en una cadena de caracteres ASCII.
+
+* **Conversión:** Se utiliza `btoa()` (binary-to-ASCII) para codificar los datos binarios (obtenidos del `ArrayBuffer`) a Base64. Para el proceso inverso (decodificar de Base64 a binario), se usaría `atob()`.
+    ```typescript
+    // Función para convertir ArrayBuffer a cadena Base64
+    const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+      let binary = '';
+      const bytes = new Uint8Array(buffer); // Crear una vista de bytes del buffer
+      const len = bytes.byteLength;
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]); // Convertir cada byte a carácter
+      }
+      return window.btoa(binary); // Codificar la cadena binaria a Base64
+    };
+
+    // Para la decodificación (Base64 a ArrayBuffer):
+    const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
+      const binary_string = window.atob(base64); // Decodificar Base64 a cadena binaria
+      const len = binary_string.length;
+      const bytes = new Uint8Array(len); // Crear un buffer de bytes
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binary_string.charCodeAt(i); // Convertir cada carácter a byte
+      }
+      return bytes.buffer; // Devolver el ArrayBuffer subyacente
+    };
     ```
-4.  **Abrir en Navegador:** Abre tu navegador web y ve a la dirección local que indica Astro en la terminal (usualmente `http://localhost:4321`).
-5.  **Navegar y Usar:** Accede a las páginas "Encriptación" y "Desencriptación" desde el menú o los enlaces para comenzar a usar la herramienta. ¡Sigue las instrucciones en pantalla!
+* **Uso:** En este proyecto, la clave AES cifrada, el IV, y potencialmente las claves RSA exportadas, se convierten a Base64 para poder manejarlos como texto, por ejemplo, al guardarlos junto al archivo cifrado.
+
+---
