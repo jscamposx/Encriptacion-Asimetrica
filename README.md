@@ -1,6 +1,4 @@
-Okay, aquí tienes el contenido anterior formateado como un bloque de código Markdown listo para copiar y pegar en un archivo .md.
 
-Markdown
 
 # 🔐 Encriptador/Desencriptador Asimétrico Web 🔓
 
