@@ -1,118 +1,171 @@
+# 🔐 Encriptador Híbrido Web (RSA + AES)
 
+![Astro](https://img.shields.io/badge/Astro-FF5D01?style=for-the-badge\&logo=astro\&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge\&logo=react\&logoColor=61DAFB)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-0F172A?style=for-the-badge\&logo=tailwindcss\&logoColor=38BDF8)
+![WebCrypto](https://img.shields.io/badge/WebCrypto-Encryption-blue?style=for-the-badge)
 
-# 🔐 Encriptador/Desencriptador Asimétrico Web 🔓
-
-**Proyecto:** [https://poetic-stardust-ca6d13.netlify.app/decryptor/]
-
-Este proyecto implementa un sistema de **encriptación de archivos directamente en el navegador**, utilizando un enfoque de **cifrado híbrido**. El objetivo es combinar la eficiencia del cifrado simétrico con la seguridad en el intercambio de claves del cifrado asimétrico, todo ello usando tecnologías web estándar y seguras.
+> **Privacidad Total.** Una herramienta avanzada de criptografía que corre 100% en tu navegador. Nada se sube a servidores. Nada se almacena. Todo permanece bajo tu control.
 
 ---
 
-## 💡 Concepto Clave: Cifrado Híbrido
+## 📖 Descripción
 
-El cifrado híbrido es una estrategia que aprovecha lo mejor de dos mundos:
+Este proyecto implementa un sistema moderno de **Cifrado Híbrido**, combinando la velocidad del cifrado simétrico (**AES**) con la robustez del cifrado asimétrico (**RSA**). Ideal para compartir archivos de texto sensibles sin depender de servicios externos.
 
-1.  **Cifrado Simétrico (AES):** Es muy rápido y eficiente para encriptar grandes cantidades de datos (como el contenido de un archivo). Sin embargo, requiere que tanto el emisor como el receptor compartan la *misma clave secreta*, lo cual presenta un desafío para distribuirla de forma segura.
-2.  **Cifrado Asimétrico (RSA):** Utiliza un par de claves (pública y privada). La clave pública puede compartirse libremente y se usa para cifrar, mientras que solo la clave privada correspondiente puede descifrar. Es muy seguro para el intercambio de claves, pero es significativamente más lento y no es práctico para encriptar archivos grandes directamente.
+El motor criptográfico está construido sobre la **Web Crypto API**, estándar abierto, auditable y con rendimiento nativo del navegador.
 
-**¿Cómo funciona en este proyecto?**
-* Se genera una clave **AES** única para encriptar el contenido del archivo (rápido).
-* Se utiliza la clave **pública RSA** del destinatario para encriptar *únicamente* la clave AES que se acaba de generar (seguro).
-* El archivo cifrado (con AES) y la clave AES cifrada (con RSA) se envían juntos.
-* El destinatario usa su **clave privada RSA** para descifrar la clave AES, y luego usa esa clave AES para descifrar el archivo completo.
+---
+
+## 🎯 Objetivo del Proyecto
+
+Permitir que cualquier usuario pueda:
+
+* Cifrar archivos `.txt` de forma segura.
+* Proteger la clave simétrica con RSA.
+* Recuperar el archivo **solo** si posee la llave privada correcta y una frase de contraseña válida.
+* Disfrutar de una arquitectura **Zero‑Knowledge**, donde ningún dato sale del navegador.
+
+---
+
+## ✨ Características Estelares
+
+### 🛡️ Cifrado de Grado Militar
+
+* **AES‑GCM 256 bits** → rápido, seguro y con verificación de integridad.
+* **RSA‑OAEP 2048 bits** → protege la clave AES.
+
+### ⚡ Arquitectura Zero‑Knowledge
+
+* Todo ocurre 100% en el navegador.
+* Nunca se suben archivos o llaves a la nube.
+
+### 🔑 Gestión Completa de Llaves
+
+* Generación automática de pares RSA.
+* Exportación en formatos estándar:
+
+  * **SPKI** → Llave pública
+  * **PKCS#8** → Llave privada
+
+### 🧩 Capa Extra de Seguridad
+
+* Validación mediante **Passphrase** (mínimo 8 caracteres).
+* Protegida con hash **SHA‑256**.
+
+### 🎨 UI Moderna y Responsiva
+
+* Construida con **Tailwind CSS**.
+* Modo claro/oscuro automático.
+* Flujo intuitivo para usuarios sin experiencia técnica.
+
+---
+
+## 🧠 ¿Cómo Funciona el Sistema Híbrido?
+
+### 🔒 Proceso de Encriptación
+
+1. Se genera una clave **AES** efímera.
+2. Se cifra el archivo `.txt` con AES.
+3. La clave AES se cifra con la **llave pública RSA**.
+4. Se genera un paquete `.json` con:
+
+   * Contenido cifrado
+   * Clave AES cifrada
+   * IV de AES
+   * Hash de la passphrase
+
+### 🔓 Proceso de Desencriptación
+
+1. El usuario carga:
+
+   * El archivo `.json` cifrado
+   * Su **llave privada RSA**
+   * La **passphrase**
+2. Se valida la passphrase mediante hash.
+3. Se descifra la clave AES con RSA.
+4. Se recupera el contenido original del archivo.
 
 ---
 
 ## 🛠️ Tecnologías Utilizadas
 
-Este proyecto se basa exclusivamente en **APIs nativas del navegador**, evitando dependencias externas para maximizar la seguridad y minimizar el tamaño del proyecto.
-
-### 🌐 Web Crypto API (`window.crypto.subtle`)
-
-Es la piedra angular de este proyecto. La [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) es una interfaz de bajo nivel integrada en los navegadores modernos que proporciona operaciones criptográficas fundamentales de forma segura.
-
-* **Funcionalidades Usadas:** Generación de claves (AES y RSA), cifrado, descifrado y exportación/importación de claves.
-* **Ventajas:** Segura, estándar, mantenida por los fabricantes de navegadores, no requiere librerías adicionales.
-
----
-
-## 🧊 AES (Advanced Encryption Standard) - Cifrado Simétrico
-
-### 🔸 ¿Qué es AES?
-AES es el estándar de facto para el cifrado simétrico. Utiliza la **misma clave** tanto para cifrar como para descifrar datos. Es conocido por su velocidad y robustez.
-
-### 🔸 Implementación en el Proyecto:
-* **Generación de Clave AES:** Se genera una clave AES de 256 bits utilizando el modo **AES-GCM** (Galois/Counter Mode).
-    ```typescript
-    const aesKey = await crypto.subtle.generateKey(
-      { name: "AES-GCM", length: 256 }, // Algoritmo y longitud de clave
-      true,                             // Clave exportable (para cifrarla con RSA)
-      ["encrypt", "decrypt"]            // Usos permitidos para la clave
-    );
-    ```
-* **Modo AES-GCM:** Este modo es preferible porque no solo cifra los datos, sino que también incluye **autenticación (AEAD - Authenticated Encryption with Associated Data)**. Esto garantiza la confidencialidad y la integridad: si los datos cifrados son manipulados, el descifrado fallará, alertando al usuario.
-* **Vector de Inicialización (IV):** Se genera un IV aleatorio de 12 bytes (tamaño recomendado para AES-GCM) para cada operación de cifrado. El IV asegura que cifrar el mismo archivo dos veces produzca resultados diferentes, añadiendo una capa extra de seguridad. El IV no necesita ser secreto y se envía junto con los datos cifrados.
+| Tecnología                            | Uso                                              |
+| ------------------------------------- | ------------------------------------------------ |
+| **Astro**                             | Framework estático de alto rendimiento           |
+| **React**                             | Componentes interactivos para cifrado/descifrado |
+| **Tailwind CSS**                      | UI moderna y responsiva                          |
+| **Web Crypto API**                    | Criptografía nativa del navegador                |
+| **file-saver**                        | Descarga de archivos                             |
+| **jsencrypt / jsrsasign / crypto-js** | Utilidades auxiliares                            |
 
 ---
 
-## 🔐 RSA (Rivest–Shamir–Adleman) - Cifrado Asimétrico
+## 📂 Estructura del Proyecto
 
-### 🔸 ¿Qué es RSA?
-RSA es el algoritmo más conocido de cifrado asimétrico. Funciona con un **par de claves** matemáticamente relacionadas:
-* **Clave Pública:** Se usa para *cifrar* datos o verificar firmas. Puede compartirse sin riesgo.
-* **Clave Privada:** Se usa para *descifrar* datos o crear firmas. Debe mantenerse en secreto absoluto.
-
-### 🔸 Implementación en el Proyecto:
-* **Rol de RSA:** Su función principal aquí **no es cifrar el archivo**, sino **cifrar la clave AES simétrica** utilizada para el archivo. Esto resuelve el problema de cómo compartir la clave AES de forma segura.
-* **Generación del Par de Claves RSA:** Se genera un par de claves RSA (pública y privada) con los siguientes parámetros:
-    ```typescript
-    const keyPair = await crypto.subtle.generateKey(
-      {
-        name: "RSA-OAEP",            // Algoritmo RSA con padding OAEP (más seguro)
-        modulusLength: 2048,         // Longitud del módulo (tamaño de la clave), 2048 es un buen balance seguridad/rendimiento
-        publicExponent: new Uint8Array([1, 0, 1]), // Exponente público estándar (65537)
-        hash: "SHA-256",             // Algoritmo de hash a usar con OAEP
-      },
-      true,                         // Claves exportables (para guardarlas o compartirlas)
-      ["encrypt", "decrypt"]        // Usos permitidos (cifrar con pública, descifrar con privada)
-    );
-    ```
-* **RSA-OAEP:** Se utiliza RSA con el padding OAEP (Optimal Asymmetric Encryption Padding). OAEP añade aleatoriedad al proceso de cifrado, haciendo a RSA resistente a ciertos tipos de ataques criptográficos.
+```bash
+src/
+├── components/
+│   ├── FileEncryptor.tsx   # Lógica de claves, AES y RSA
+│   ├── FileDecryptor.tsx   # Importación y descifrado
+│   └── NavBar.tsx          # Navegación UI
+├── layouts/
+│   └── Layout.astro        # Estructura base
+├── pages/
+│   ├── index.astro         # Landing
+│   ├── Encryptor.astro     # Página de cifrado
+│   └── Decryptor.astro     # Página de descifrado
+└── styles/
+    └── global.css          # Estilos globales
+```
 
 ---
 
-## 🔄 Manejo de Datos: ArrayBuffer y Base64
+## 🚀 Instalación y Uso
 
-### 🔸 ¿Qué es `ArrayBuffer`?
-La Web Crypto API opera con datos binarios. Muchas de sus funciones devuelven los resultados (claves, datos cifrados) en formato `ArrayBuffer`. Un `ArrayBuffer` es un objeto que representa un bloque genérico de datos binarios de longitud fija. No se puede manipular directamente, sino a través de "vistas" como `Uint8Array`.
+### 1️⃣ Clonar el repositorio
 
-### 🔸 ¿Por qué convertir a Base64?
-Los `ArrayBuffer` son datos binarios puros. Para poder almacenarlos fácilmente (por ejemplo, en un archivo JSON), enviarlos a través de redes (que a menudo prefieren texto) o simplemente mostrarlos/copiarlos como texto, necesitamos una representación textual. **Base64** es un esquema de codificación que convierte datos binarios en una cadena de caracteres ASCII.
+```bash
+git clone https://github.com/tu-usuario/encriptacion-asimetrica.git
+cd encriptacion-asimetrica
+```
 
-* **Conversión:** Se utiliza `btoa()` (binary-to-ASCII) para codificar los datos binarios (obtenidos del `ArrayBuffer`) a Base64. Para el proceso inverso (decodificar de Base64 a binario), se usaría `atob()`.
-    ```typescript
-    // Función para convertir ArrayBuffer a cadena Base64
-    const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
-      let binary = '';
-      const bytes = new Uint8Array(buffer); // Crear una vista de bytes del buffer
-      const len = bytes.byteLength;
-      for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(bytes[i]); // Convertir cada byte a carácter
-      }
-      return window.btoa(binary); // Codificar la cadena binaria a Base64
-    };
+### 2️⃣ Instalar dependencias
 
-    // Para la decodificación (Base64 a ArrayBuffer):
-    const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
-      const binary_string = window.atob(base64); // Decodificar Base64 a cadena binaria
-      const len = binary_string.length;
-      const bytes = new Uint8Array(len); // Crear un buffer de bytes
-      for (let i = 0; i < len; i++) {
-        bytes[i] = binary_string.charCodeAt(i); // Convertir cada carácter a byte
-      }
-      return bytes.buffer; // Devolver el ArrayBuffer subyacente
-    };
-    ```
-* **Uso:** En este proyecto, la clave AES cifrada, el IV, y potencialmente las claves RSA exportadas, se convierten a Base64 para poder manejarlos como texto, por ejemplo, al guardarlos junto al archivo cifrado.
+```bash
+npm install
+```
+
+### 3️⃣ Iniciar servidor de desarrollo
+
+```bash
+npm run dev
+```
+
+Visita: **[http://localhost:4321](http://localhost:4321)**
+
+### 4️⃣ Construir para producción
+
+```bash
+npm run build
+```
 
 ---
+
+## ⚠️ Aviso de Seguridad
+
+Aunque la herramienta usa criptografía robusta, la seguridad final depende del usuario:
+
+* **Guarda tu llave privada**. Si la pierdes, no hay forma de recuperar los archivos.
+* **Nunca compartas tu llave privada**.
+* Usa solo dispositivos confiables y libres de malware.
+
+---
+
+## ❤️ Créditos
+
+Desarrollado con dedicación, seguridad y amor por la criptografía moderna.
+
+---
+
+🔐 **Encriptador Híbrido Web — Seguridad real. Sin intermediarios.**
